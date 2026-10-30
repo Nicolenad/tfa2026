@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mappe cognitive – esercitazione interattiva</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+:root{--bg:#EAF3F2;--card:#fff;--ink:#16222E;--brand:#0F766E;--onbrand:#fff;--gold:#F5B700;--ok:#1E7A46;--okbg:#DDF3E5;--no:#9A4A06;--nobg:#FFEBD0;--line:#A9C4C1;--sel:#FFF3C4;--c1:#0F766E;--c2:#C2410C;--c3:#6D28D9;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0D1A1E;--card:#16282D;--ink:#EAF4F3;--brand:#5EEAD4;--onbrand:#0D1A1E;--ok:#7BE0A5;--okbg:#123A27;--no:#FFC27A;--nobg:#4A2E0C;--line:#355A5A;--sel:#4A4010;--c1:#5EEAD4;--c2:#FDBA74;--c3:#C4B5FD;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0D1A1E;--card:#16282D;--ink:#EAF4F3;--brand:#5EEAD4;--onbrand:#0D1A1E;--ok:#7BE0A5;--okbg:#123A27;--no:#FFC27A;--nobg:#4A2E0C;--line:#355A5A;--sel:#4A4010;--c1:#5EEAD4;--c2:#FDBA74;--c3:#C4B5FD;color-scheme:dark}
+html{height:100%}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Atkinson Hyperlegible",Verdana,Arial,sans-serif;font-size:1.15rem;line-height:1.55}
+main{max-width:800px;margin:0 auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+h1{font-size:1.6rem;margin:0;color:var(--brand)}
+.stars{font-weight:700;background:var(--card);border:2px solid var(--gold);border-radius:999px;padding:4px 16px}
+.bar{height:10px;background:var(--card);border:2px solid var(--line);border-radius:99px;margin:12px 0;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--brand);transition:width .4s}
+nav{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:14px}
+nav button{min-height:58px;padding:4px 2px;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;font:inherit;font-size:.8rem;font-weight:700;cursor:pointer;line-height:1.2}
+nav button b{display:block;font-size:1.3rem}
+nav button[aria-current="step"]{background:var(--brand);color:var(--onbrand);border-color:var(--brand)}
+nav button.done{border-color:var(--ok)}
+.card{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:20px}
+h2{font-size:1.45rem;margin:0 0 4px}
+.ins{margin:0 0 14px}
+button{font:inherit;color:inherit}
+.btn,.chip,.opt{min-height:52px;padding:8px 18px;border-radius:14px;border:2px solid var(--brand);background:var(--card);color:var(--ink);cursor:pointer;font-weight:700;text-align:center}
+.btn.main{background:var(--brand);color:var(--onbrand)}
+.btn:disabled,.chip:disabled,.opt:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:4px solid var(--gold);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0}
+.speak{min-height:46px;padding:6px 16px;border-radius:999px;border:2px solid var(--line);background:var(--bg);cursor:pointer;font-weight:700}
+.tag{background:var(--bg);border-radius:99px;padding:4px 14px;font-weight:700;font-size:1rem}
+svg{display:block;width:100%;height:auto;max-width:520px;margin:8px auto}
+.nd{cursor:pointer}.nd rect,.nd circle{fill:var(--card);stroke:var(--brand);stroke-width:3}
+.nd.seen rect,.nd.seen circle{fill:var(--okbg);stroke:var(--ok)}
+.nd:focus-visible{outline:none}.nd:focus-visible rect{stroke:var(--gold);stroke-width:5}
+svg text{fill:var(--ink);font-family:inherit;font-weight:700;font-size:15px;text-anchor:middle;pointer-events:none}
+.info{min-height:3.2em;padding:12px;background:var(--bg);border-radius:14px;font-weight:700}
+.chk{display:flex;gap:12px;align-items:center;width:100%;text-align:left;margin:8px 0;min-height:58px}
+.chk .bx{flex:none;width:30px;height:30px;border:3px solid var(--brand);border-radius:8px;display:grid;place-items:center;font-size:1.2rem}
+.chk[aria-checked="true"]{background:var(--okbg);border-color:var(--ok)}
+.chk[aria-checked="true"] .bx{background:var(--ok);color:#fff;border-color:var(--ok)}
+.sent{line-height:2.6;margin:14px 0}
+.blank{display:inline-block;min-width:130px;min-height:46px;padding:2px 12px;border:3px dashed var(--brand);border-radius:12px;background:var(--bg);font-weight:700;vertical-align:middle;cursor:pointer;line-height:1.4}
+.blank.act{background:var(--sel);border-style:solid}
+.blank.ok,.ok{background:var(--okbg);border-color:var(--ok);border-style:solid}
+.blank.no,.no{background:var(--nobg);border-color:var(--no);border-style:solid}
+.bank{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0;padding:12px;background:var(--bg);border-radius:14px}
+.flips{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.flip{min-height:140px;padding:14px;border-radius:16px;border:3px solid var(--brand);background:var(--card);cursor:pointer;font-weight:700}
+.flip b{display:block;font-size:2.2rem}
+.flip[aria-pressed="true"]{background:var(--sel);border-style:dashed;font-size:1.1rem}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.tabs .opt[aria-selected="true"]{background:var(--brand);color:var(--onbrand)}
+.tabs .opt{min-height:48px;padding:6px 12px}
+.sk *{stroke:var(--brand);stroke-width:3;fill:none;stroke-linecap:round}
+.sk .f{fill:var(--brand)}
+.q{margin:14px 0;padding:12px;border:2px solid var(--line);border-radius:14px}
+.q p{margin:0 0 8px;font-weight:700}
+.q .opt{margin:0 6px 6px 0;min-height:46px;padding:6px 12px}
+.q small{display:block;font-weight:700}
+.tg{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.tg .opt{min-height:48px;padding:6px 14px}
+.tg .opt[aria-pressed="true"]{background:var(--brand);color:var(--onbrand)}
+.demo{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch;justify-content:center;padding:14px;background:var(--bg);border-radius:16px;min-height:150px}
+.demo h3{width:100%;text-align:center;margin:0;font-size:1.1rem}
+.n{flex:1 1 150px;max-width:230px;padding:12px;border:3px solid var(--line);border-radius:14px;background:var(--card);text-align:center;font-weight:700;cursor:default}
+.n .em{display:block;font-size:2rem}
+.n.c{border-color:var(--cc);background:color-mix(in srgb,var(--cc) 18%,var(--card))}
+.n.gap{border-style:dashed;cursor:pointer}
+.ar{align-self:center;font-size:1.6rem;font-weight:700}
+.fb{min-height:1.6em;margin:12px 0 0;font-weight:700;font-size:1.2rem}
+.fb.good{color:var(--ok)}.fb.try{color:var(--no)}
+@media (max-width:520px){nav button{font-size:.68rem}.blank{min-width:100px}}
+@media (prefers-reduced-motion:no-preference){.shake{animation:sh .3s}@keyframes sh{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}}
+</style>
+</head>
+<body>
+<main>
+<header><h1>🗺️ Mappe cognitive</h1><div class="stars" id="stars" aria-live="polite">⭐ 0 / 6</div></header>
+<div class="bar" aria-hidden="true"><i id="pb"></i></div>
+<nav id="nav" aria-label="Schede"></nav>
+<section class="card" id="stage"></section>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const N=[['🗺️','Cos’è'],['✅','Prerequisiti'],['🎯','Obiettivo'],['🧩','Obiettivi'],['🧭','Tipi di mappa'],['🪄','Semplifica']];
+const done=new Set();let cur=0;
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function say(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='it-IT';u.rate=.9;speechSynthesis.speak(u)}catch(e){}}
+const head=(t,i,x)=>`<h2>${t}</h2><p class="ins">${i}</p><button class="speak" data-say="${t}. ${x||i.replace(/<[^>]+>/g,'')}">🔊 Ascolta</button>`;
+const fb=(m,c)=>{const e=$('#fb');e.textContent=m;e.className='fb '+(c||'')};
+function nav(){$('#nav').innerHTML=N.map((n,i)=>`<button data-i="${i}" ${i===cur?'aria-current="step"':''} class="${done.has(i)?'done':''}" aria-label="Scheda ${i+1}: ${n[1]}${done.has(i)?', completata':''}"><b>${done.has(i)?'✓':n[0]}</b>${n[1]}</button>`).join('');
+$('#stars').textContent='⭐ '+done.size+' / 6';$('#pb').style.width=done.size/6*100+'%'}
+function finish(msg){done.add(cur);nav();
+fb(done.size===6?'🏆 Hai completato tutte le schede!':'🎉 '+(msg||'Bravo!'),'good');
+if(cur<5){const b=document.createElement('button');b.className='btn main';b.textContent='Scheda successiva';b.onclick=()=>show(cur+1);$('#fb').after(b)}}
+function show(i){cur=i;nav();const s=$('#stage');s.innerHTML='';R[i](s);window.scrollTo(0,0);s.insertAdjacentHTML('beforeend','<p class="fb" id="fb" role="status" aria-live="polite"></p>')}
+document.addEventListener('click',e=>{const n=e.target.closest('#nav button');if(n)show(+n.dataset.i);const s=e.target.closest('.speak');if(s)say(s.dataset.say)});
+
+const R=[
+// 0 Cos'è
+s=>{const D={Concetti:'Le idee importanti dell’argomento: sono i mattoni della mappa.','Parole chiave':'Poche parole scelte con cura, che riassumono ogni idea.',Immagini:'Disegni e simboli che aiutano a vedere e a ricordare.',Collegamenti:'Linee e frecce che mostrano come le idee sono legate tra loro.'};
+const P=[['Concetti',140,22,120],['Parole chiave',0,128,122],['Immagini',278,128,122],['Collegamenti',130,234,140]];const seen=new Set();
+s.innerHTML=head('Cos’è una mappa cognitiva','È una <b>rappresentazione grafica</b> di informazioni e conoscenze. Si parte da un argomento conosciuto o già visto in classe, si scelgono le informazioni principali e si organizzano in modo logico.')+
+`<div class="row"><span class="tag">👤 Da soli o in gruppo</span><span class="tag">📄 Su carta o 💻 con strumenti digitali</span></div><p><b>Tocca ogni elemento</b> della mappa per scoprire cosa contiene.</p>
+<svg viewBox="0 0 400 290" role="group" aria-label="Mappa con quattro elementi"><path d="M200 150V66M200 150H122M200 150H278M200 150V234" stroke="var(--line)" stroke-width="4"/>
+<circle cx="200" cy="150" r="46" fill="var(--brand)"/><text x="200" y="146" style="fill:var(--onbrand)">Mappa</text><text x="200" y="165" style="fill:var(--onbrand)">cognitiva</text>
+${P.map(p=>`<g class="nd" tabindex="0" role="button" data-k="${p[0]}" aria-label="${p[0]}"><rect x="${p[1]}" y="${p[2]}" width="${p[3]}" height="44" rx="22"/><text x="${p[1]+p[3]/2}" y="${p[2]+28}">${p[0]}</text></g>`).join('')}</svg><div class="info" id="inf">Scegli un elemento della mappa.</div>`;
+const go=g=>{const k=g.dataset.k;seen.add(k);g.classList.add('seen');$('#inf').textContent=k+': '+D[k];if(seen.size===4&&!done.has(0))finish('Hai scoperto tutti gli elementi!')};
+s.querySelectorAll('.nd').forEach(g=>{g.onclick=()=>go(g);g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go(g)}}})},
+
+// 1 Prerequisiti
+s=>{const L=['Capire un testo o un argomento presentato dall’insegnante','Conoscere le parole di base dell’argomento','Riconoscere le informazioni principali e distinguerle da quelle secondarie','Saper trovare le parole chiave','Saper classificare e raggruppare','Capire semplici relazioni tra i concetti','Organizzare le informazioni in sequenza o per livelli'];
+s.innerHTML=head('Cosa serve per iniziare','Tocca le abilità che <b>possiedi già</b>.',L.join('. '))+`<div id="ls">${L.map(l=>`<button class="opt chk" role="checkbox" aria-checked="false"><span class="bx"></span><span>${l}</span></button>`).join('')}</div><p><b id="cn">0 di 7</b> già consolidati</p><button class="btn main" id="ok">Vedi il risultato</button>`;
+const B=[...s.querySelectorAll('.chk')];
+B.forEach(b=>b.onclick=()=>{const v=b.getAttribute('aria-checked')!=='true';b.setAttribute('aria-checked',v);b.querySelector('.bx').textContent=v?'✓':'';$('#cn').textContent=B.filter(x=>x.getAttribute('aria-checked')==='true').length+' di 7'});
+$('#ok').onclick=()=>{const n=B.filter(x=>x.getAttribute('aria-checked')==='true').length;finish(n===7?'Ottimo, sei pronto!':'Non devi averli tutti: alcune abilità si sviluppano proprio facendo l’attività.')}},
+
+// 2 Obiettivo principale
+s=>{const P=['Imparare a','le informazioni, individuando i concetti più','e collegandoli tra loro attraverso una','per comprendere meglio e','gli argomenti studiati.'],A=['organizzare','importanti','mappa','ricordare'];
+const words=shuffle(A.concat('cancellare'));let f=[null,null,null,null],act=0;
+s.innerHTML=head('Obiettivo principale','Completa la frase con le parole giuste.','Imparare a organizzare le informazioni, individuando i concetti più importanti e collegandoli tra loro attraverso una mappa, per comprendere meglio e ricordare gli argomenti studiati.')+
+`<p class="sent">${P.map((t,i)=>t+(i<4?` <button class="blank" data-i="${i}" aria-label="Spazio ${i+1}"></button> `:'')).join('')}</p><div class="bank">${words.map(w=>`<button class="chip">${w}</button>`).join('')}</div><button class="btn main" id="chk" hidden>Controlla</button>`;
+const B=[...s.querySelectorAll('.blank')],C=[...s.querySelectorAll('.chip')];
+const draw=()=>{B.forEach((b,i)=>{b.textContent=f[i]||'';b.classList.toggle('act',i===act&&!f[i]);b.classList.remove('ok','no')});C.forEach(c=>c.disabled=f.includes(c.textContent));$('#chk').hidden=f.includes(null);fb('')};
+B.forEach((b,i)=>b.onclick=()=>{if(f[i])f[i]=null;act=i;draw()});
+C.forEach(c=>c.onclick=()=>{const i=f[act]===null?act:f.indexOf(null);if(i<0)return;f[i]=c.textContent;act=f.indexOf(null);draw()});
+$('#chk').onclick=()=>{let all=true;B.forEach((b,i)=>{const r=f[i]===A[i];b.classList.add(r?'ok':'no');if(!r)all=false});all?finish('Frase completata!'):fb('Quasi! Tocca le caselle arancioni per cambiarle.','try')};
+draw()},
+
+// 3 Obiettivi secondari
+s=>{const O=[['🔎','Cosa conta','Individuare le informazioni più importanti.'],['✍️','Con parole mie','Rielaborare i contenuti utilizzando parole chiave.'],['🗂️','Gruppi','Raggruppare informazioni appartenenti alla stessa categoria.'],['📶','Ordine','Ordinare i concetti secondo criteri di importanza o relazione.'],['🧠','Memoria','Favorire la memorizzazione attraverso la rappresentazione visiva.']];const seen=new Set();
+s.innerHTML=head('Obiettivi secondari','Tocca ogni carta per girarla e leggere l’obiettivo.',O.map(o=>o[2]).join(' '))+`<div class="flips" style="margin-top:14px">${O.map((o,i)=>`<button class="flip" aria-pressed="false" data-i="${i}"><b>${o[0]}</b>${o[1]}</button>`).join('')}</div>`;
+s.querySelectorAll('.flip').forEach(b=>b.onclick=()=>{const i=+b.dataset.i,on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on);b.innerHTML=on?O[i][2]:`<b>${O[i][0]}</b>${O[i][1]}`;if(on){seen.add(i);if(seen.size===5&&!done.has(3))finish('Hai letto tutti gli obiettivi!')}})},
+
+// 4 Tipi di mappa
+s=>{const T=[['time','⏳','Linea del tempo','Mette gli eventi in fila, dal primo all’ultimo.','<path d="M10 55H190"/><circle class="f" cx="30" cy="55" r="9"/><circle class="f" cx="80" cy="55" r="9"/><circle class="f" cx="130" cy="55" r="9"/><circle class="f" cx="170" cy="55" r="9"/><path d="M30 40V20M130 40V20"/>'],
+['dig','💻','Mappa digitale','Si costruisce con un programma su computer o tablet: puoi spostare, colorare e correggere.','<rect x="30" y="8" width="140" height="78" rx="8"/><path d="M80 100H120M100 86V100"/><circle class="f" cx="100" cy="47" r="9"/><path d="M100 47L60 28M100 47L140 28M100 47L60 68M100 47L140 68"/>'],
+['rad','☀️','Mappa a raggiera','Un tema al centro e tante idee che partono tutto intorno.','<circle class="f" cx="100" cy="55" r="16"/><path d="M100 55L40 25M100 55L160 25M100 55L40 90M100 55L160 90"/><circle cx="40" cy="25" r="10"/><circle cx="160" cy="25" r="10"/><circle cx="40" cy="90" r="10"/><circle cx="160" cy="90" r="10"/>'],
+['ger','🌳','Mappa gerarchica','Va dall’idea più generale ai dettagli, a livelli, come un albero.','<rect class="f" x="78" y="6" width="44" height="18"/><path d="M100 24V34M50 34H150M50 34V44M150 34V44"/><rect x="30" y="44" width="40" height="18"/><rect x="130" y="44" width="40" height="18"/><path d="M50 62V72M20 72H80M130 72V72M150 62V72M120 72H180M20 72V82M80 72V82M120 72V82M180 72V82"/><rect x="2" y="82" width="36" height="16"/><rect x="62" y="82" width="36" height="16"/><rect x="102" y="82" width="36" height="16"/><rect x="162" y="82" width="36" height="16"/>']];
+const Q=[['Vuoi mettere gli eventi di una storia in ordine di tempo.','time'],['Hai un tema al centro e tante idee che partono da lì.','rad'],['Vai dall’idea generale ai dettagli, a livelli.','ger'],['Costruisci la mappa con il tablet o il computer.','dig']];let n=0;
+s.innerHTML=head('Tipi di mappa','Esplora i quattro tipi, poi metti alla prova ciò che hai scoperto.',T.map(t=>t[2]+': '+t[3]).join(' '))+`<div class="tabs" role="tablist">${T.map((t,i)=>`<button class="opt" role="tab" data-i="${i}" aria-selected="${i===0}">${t[1]} ${t[2]}</button>`).join('')}</div><div class="info" id="ti"></div><svg class="sk" id="sv" viewBox="0 0 200 110" aria-hidden="true"></svg><h3>Quale mappa useresti?</h3>${Q.map((q,i)=>`<div class="q" id="q${i}"><p>${q[0]}</p>${T.map(t=>`<button class="opt" data-k="${t[0]}">${t[1]} ${t[2]}</button>`).join('')}<small></small></div>`).join('')}`;
+const tab=i=>{s.querySelectorAll('.tabs .opt').forEach((b,j)=>b.setAttribute('aria-selected',i===j));$('#ti').innerHTML='<b>'+T[i][2]+'</b>: '+T[i][3];$('#sv').innerHTML=T[i][4]};
+s.querySelectorAll('.tabs .opt').forEach(b=>b.onclick=()=>tab(+b.dataset.i));tab(0);
+Q.forEach((q,i)=>{const d=$('#q'+i);d.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const m=d.querySelector('small');
+if(b.dataset.k===q[1]){d.classList.add('ok');d.querySelectorAll('.opt').forEach(x=>x.disabled=true);m.textContent='✓ Giusto!';if(++n===4)finish('Hai scelto la mappa giusta ogni volta!')}
+else{b.disabled=true;m.textContent='Non proprio. Prova un’altra mappa!';d.classList.add('shake');setTimeout(()=>d.classList.remove('shake'),400)}})})},
+
+// 5 Semplificazione
+s=>{const G=[['Poche parole chiave','k'],['Termini conosciuti','w'],['Immagini al posto delle parole','i'],['Colori per le categorie','c'],['Schema già pronto da completare','s']];
+const ND=[['☀️','Evaporazione: l’acqua liquida passa allo stato di vapore acqueo','Evaporazione','L’acqua del mare, scaldata dal sole, diventa vapore','L’acqua sale','--c1'],['☁️','Condensazione: il vapore si raffredda e torna liquido formando le nuvole','Condensazione','In alto fa freddo e il vapore diventa nuvola','Nasce la nuvola','--c2'],['🌧️','Precipitazione: le gocce delle nuvole cadono sul suolo','Precipitazione','Le gocce della nuvola cadono giù','Cade la pioggia','--c3']];
+const on=new Set(),used=new Set();let gap=false;
+s.innerHTML=head('Come semplificare','Accendi le <b>strategie</b> una alla volta e guarda come cambia la stessa mappa.',G.map(g=>g[0]).join('. '))+`<div class="tg">${G.map(g=>`<button class="opt" aria-pressed="false" data-k="${g[1]}">${g[0]}</button>`).join('')}</div><div class="demo" id="dm" aria-live="polite"></div><p class="info" id="hint">Prova ad accendere le cinque strategie.</p>`;
+const draw=()=>{const k=on.has('k'),w=on.has('w'),sc=on.has('s');
+$('#dm').innerHTML=(sc?'<h3>Il ciclo dell’acqua</h3>':'')+ND.map((n,i)=>{const t=k&&w?n[4]:w?n[3]:k?n[2]:n[1];const g=sc&&i===2&&!gap;
+return (i&&sc?'<span class="ar" aria-hidden="true">➜</span>':'')+`<div class="n ${on.has('c')?'c':''} ${g?'gap':''}" style="--cc:var(${n[5]})" ${g?'tabindex="0" role="button"':''}>${on.has('i')?`<span class="em">${n[0]}</span>`:''}${g?'Tocca: cosa manca?':t}</div>`}).join('');
+const gp=$('#dm .gap');if(gp)gp.onclick=()=>{gap=true;draw()}};
+s.querySelectorAll('.tg .opt').forEach(b=>b.onclick=()=>{const k=b.dataset.k,v=!on.has(k);v?on.add(k):on.delete(k);b.setAttribute('aria-pressed',v);if(v)used.add(k);draw();
+if(used.size===5&&!done.has(5))finish('Hai provato tutte le strategie!')});
+draw()}
+];
+nav();show(0);
+</script>
+</body>
+</html>
