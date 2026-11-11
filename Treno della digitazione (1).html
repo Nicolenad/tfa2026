@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Treno della digitazione</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f4f6fb;--fg:#1c2433;--card:#fff;--muted:#5d6980;--line:#d9dfec;--accent:#2f6fed;--ok:#1f9d55;--bad:#d64545;color-scheme:light}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#12161f;--fg:#e8ecf5;--card:#1b212d;--muted:#9aa5bb;--line:#2c3446;--accent:#6b9bff;--ok:#4cc883;--bad:#ff7b7b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12161f;--fg:#e8ecf5;--card:#1b212d;--muted:#9aa5bb;--line:#2c3446;--accent:#6b9bff;--ok:#4cc883;--bad:#ff7b7b;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:16px}
+h1{font-size:1.5rem;margin:0 0 4px}
+p.sub{margin:0 0 14px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+label{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted)}
+input,select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px}
+input[type=range]{padding:0}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:10px 16px;background:var(--accent);color:#fff;font-weight:600}
+button.sec{background:transparent;color:var(--fg);border:1px solid var(--line)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.stats{display:flex;gap:16px;flex-wrap:wrap;font-weight:600}
+.stats span small{display:block;font-weight:400;color:var(--muted);font-size:.75rem}
+.timer{font-size:1.8rem;font-variant-numeric:tabular-nums}
+.wrap{overflow:hidden;border-radius:12px;border:1px solid var(--line)}
+canvas{display:block;width:100%;height:230px}
+.speed{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.speed input{flex:1;min-width:140px}
+.hint{color:var(--muted);font-size:.85rem;margin-top:8px}
+#result{display:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:10px 0}
+.grid div{background:var(--bg);border-radius:10px;padding:10px;text-align:center}
+.grid b{display:block;font-size:1.5rem}
+.grid small{color:var(--muted)}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+#msg{margin-top:8px;color:var(--muted);font-size:.9rem}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th,td{text-align:left;padding:6px;border-bottom:1px solid var(--line)}
+.scroll{overflow-x:auto}
+</style>
+</head>
+<body>
+<main>
+<h1>🚂 Treno della digitazione</h1>
+<p class="sub">Premi sulla tastiera la lettera del vagone più vicino all’uscita a sinistra, prima che esca dallo schermo.</p>
+
+<div class="card settings">
+  <label>Nome (per il report)<input id="name" type="text" placeholder="Il tuo nome" maxlength="40"></label>
+  <label>Durata (secondi)<input id="dur" type="number" min="10" max="3600" step="5" value="60"></label>
+  <label>Contenuto dei vagoni
+    <select id="set">
+      <option value="abcdefghijklmnopqrstuvwxyz">Tutte (a–z)</option>
+      <option value="asdfghjkl">Riga centrale</option>
+      <option value="qwertyuiop">Riga alta</option>
+      <option value="zxcvbnm">Riga bassa</option>
+      <option value="asdfjkl">Solo base (asdf jkl)</option><option value="w:percorso">Percorso: sillabe, poi parole semplici</option><option value="w:sillabe">Solo sillabe</option><option value="w:semplici">Solo parole semplici</option><option value="w:corte">Parole corte</option><option value="w:medie">Parole medie</option><option value="w:lunghe">Parole lunghe</option>
+    </select>
+  </label>
+  <label>Tema
+    <select id="theme"><option value="auto">Automatico</option><option value="light">Chiaro</option><option value="dark">Scuro</option></select>
+  </label>
+</div>
+
+<div class="card">
+  <div class="bar">
+    <div class="timer" id="time">60.0 s</div>
+    <div class="stats">
+      <span id="sOk">0<small>Corrette</small></span>
+      <span id="sErr">0<small>Errori</small></span>
+      <span id="sMiss">0<small>Perse</small></span>
+      <span id="sWpm">0<small>Parole/min</small></span>
+    </div>
+    <div class="row" style="margin:0">
+      <button id="start">▶ Inizia</button>
+      <button id="pause" class="sec" disabled>⏸ Pausa</button>
+    </div>
+  </div>
+  <div class="wrap"><canvas id="cv"></canvas></div>
+  <div class="speed">
+    <button class="sec" id="slower" type="button">🐢 Più lento</button>
+    <input id="speed" type="range" min="30" max="450" step="5" value="120" aria-label="Velocità del treno">
+    <button class="sec" id="faster" type="button">🐇 Più veloce</button>
+    <strong id="speedVal" style="min-width:90px;text-align:right">120 px/s</strong>
+  </div>
+  <div class="row"><button class="sec" id="dlApp" type="button">⬇ Scarica l’app (.html)</button><span id="dlMsg" class="hint"></span></div>
+  <div class="hint">Durante il gioco: tasti <b>↑</b> / <b>↓</b> (o <b>+</b> / <b>-</b>) cambiano la velocità, <b>Esc</b> mette in pausa.</div>
+</div>
+
+<div class="card" id="result">
+  <h2 style="margin:0 0 4px">Risultato</h2>
+  <div id="resHead" class="hint"></div>
+  <div class="grid" id="resGrid"></div>
+  <div id="resLetters" class="hint"></div>
+  <div class="row">
+    <button id="save">💾 Salva e scarica report</button>
+    <button id="again" class="sec">Gioca ancora</button>
+  </div>
+  <div id="msg"></div>
+</div>
+
+<div class="card" id="histCard" style="display:none">
+  <h2 style="margin:0 0 8px;font-size:1.1rem">Storico salvato</h2>
+  <div class="scroll"><table id="hist"></table></div>
+  <div class="row"><button class="sec" id="clearHist">Cancella storico</button></div>
+</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id)};
+var cv=$("cv"),ctx=cv.getContext("2d");
+var W=800,H=230,DPR=window.devicePixelRatio||1;
+var WG=64,GAP=10,RAIL=176;
+var S={done:0,running:false,paused:false,wagons:[],timeLeft:60,elapsed:0,ok:0,err:0,miss:0,errBy:{},okBy:{},speed:120,flash:0,saved:false,last:null,cfg:null,t:0};
+
+function resize(){
+  W=cv.parentNode.clientWidth;
+  cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener("resize",resize);resize();
+
+function letters(){return $("set").value}
+var WORDS={sillabe:"ma me mi mo mu pa pe pi po pu ta te ti to tu la le li lo lu ra re ri ro ru sa se si so su na ne ni no nu ca co cu ba be bi bo bu da de di do du fa fe fi fo fu va ve vi vo vu gli gna chi che sci",semplici:"mamma papa nonno nonna casa pane mela luna sole gatto cane topo rosa libro palla bimbo sedia tavolo fiore mano naso dito mare nave sasso pera uva dado fata",corte:"sole mare casa luna gatto cane pane vino rosa fiume nave toro ciao dado lago muro orso palla riso seta tela uva vela zero fiore libro tempo",medie:"giardino finestra montagna cucina scuola tastiera famiglia primavera colazione quaderno stazione sorriso lavagna strada biglietto cavallo bicicletta paesaggio gelato pomeriggio",lunghe:"automobile televisione pasticceria incredibile avventura meraviglioso insegnante telecomunicazione immaginazione campionato rappresentante fotografia temperatura appartamento passeggiata"};
+function pick(){
+  var v=letters();
+  if(v.indexOf("w:")===0){
+    var k=v.slice(2);
+    if(k==="percorso"){k=(S.n++<14)?"sillabe":"semplici"}
+    var l=WORDS[k].split(" ");return l[Math.floor(Math.random()*l.length)];
+  }
+  return v[Math.floor(Math.random()*v.length)];
+}
+function mk(x){var c=pick();return {x:x,ch:c,pos:0,w:Math.max(WG,c.length*22+26),st:"active"}}
+
+function reset(){
+  var d=Math.max(10,Math.min(3600,parseInt($("dur").value,10)||60));
+  $("dur").value=d;
+  S.cfg={dur:d,set:$("set").selectedOptions[0].textContent};
+  S.timeLeft=d;S.elapsed=0;S.ok=S.err=S.miss=S.done=0;S.n=0;S.errBy={};S.okBy={};S.saved=false;S.flash=0;
+  S.wagons=[{x:W*0.45,ch:"",w:WG,pos:0,st:"loco"}];
+  fill();updateUI();
+}
+function fill(){
+  var l=S.wagons[S.wagons.length-1];
+  while(l.x+l.w<W+80){l=mk(l.x+l.w+GAP);S.wagons.push(l)}
+}
+function target(){
+  for(var i=0;i<S.wagons.length;i++){if(S.wagons[i].st==="active")return S.wagons[i]}
+  return null;
+}
+function fmt(n){return n.toFixed(1)}
+function wpm(){return S.elapsed>1?(S.ok/5)/(S.elapsed/60):0}
+function acc(){var t=S.ok+S.err;return t?Math.round(S.ok/t*100):100}
+function updateUI(){
+  $("time").textContent=fmt(Math.max(0,S.timeLeft))+" s";
+  $("sOk").firstChild.nodeValue=S.ok;
+  $("sErr").firstChild.nodeValue=S.err;
+  $("sMiss").firstChild.nodeValue=S.miss;
+  $("sWpm").firstChild.nodeValue=Math.round(wpm());
+}
+function setSpeed(v){
+  S.speed=Math.max(30,Math.min(450,v));
+  $("speed").value=S.speed;$("speedVal").textContent=Math.round(S.speed)+" px/s";
+}
+
+function start(){
+  reset();
+  $("result").style.display="none";
+  S.running=true;S.paused=false;
+  $("start").textContent="↻ Ricomincia";$("pause").disabled=false;$("pause").textContent="⏸ Pausa";
+  ["dur","set"].forEach(function(i){$(i).disabled=true});
+  document.activeElement&&document.activeElement.blur&&document.activeElement.blur();
+}
+function stopUI(){
+  S.running=false;
+  $("pause").disabled=true;$("start").textContent="▶ Inizia";
+  ["dur","set"].forEach(function(i){$(i).disabled=false});
+}
+function finish(){
+  S.timeLeft=0;stopUI();updateUI();showResult();
+}
+function togglePause(){
+  if(!S.running)return;
+  S.paused=!S.paused;
+  $("pause").textContent=S.paused?"▶ Riprendi":"⏸ Pausa";
+}
+
+function data(){
+  var tot=S.ok+S.err+S.miss;
+  return {
+    nome:($("name").value||"").trim()||"(senza nome)",
+    data:new Date().toLocaleString("it-IT"),
+    durata:S.cfg.dur,tempoGiocato:Math.round(S.elapsed*10)/10,
+    lettere:S.cfg.set,velocita:Math.round(S.speed),
+    corrette:S.ok,errori:S.err,perse:S.miss,totale:tot,completati:S.done,
+    precisione:acc(),wpm:Math.round(wpm()*10)/10,
+    lpm:S.elapsed>1?Math.round(S.ok/(S.elapsed/60)):0,
+    errBy:Object.assign({},S.errBy)
+  };
+}
+function lettersErr(o){
+  var k=Object.keys(o).sort(function(a,b){return o[b]-o[a]});
+  return k.length?k.map(function(c){return c.toUpperCase()+" ("+o[c]+")"}).join(", "):"nessuno";
+}
+function showResult(){
+  var d=data();
+  $("resHead").textContent=d.nome+" · "+d.data+" · contenuto: "+d.lettere;
+  var items=[[d.completati,"Vagoni completati"],[d.corrette,"Lettere corrette"],[d.errori,"Errori"],[d.perse,"Perse"],[d.precisione+"%","Precisione"],[d.wpm,"Parole/min"],[d.lpm,"Lettere/min"]];
+  $("resGrid").innerHTML=items.map(function(i){return "<div><b>"+i[0]+"</b><small>"+i[1]+"</small></div>"}).join("");
+  $("resLetters").textContent="Lettere sbagliate più spesso: "+lettersErr(d.errBy);
+  $("msg").textContent="";
+  $("result").style.display="block";
+  $("result").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function report(d){
+  return ["REPORT DI DIGITAZIONE","======================",
+  "Nome: "+d.nome,"Data: "+d.data,"Durata impostata: "+d.durata+" s",
+  "Tempo giocato: "+d.tempoGiocato+" s","Contenuto dei vagoni: "+d.lettere,
+  "Velocità del treno a fine gioco: "+d.velocita+" px/s","",
+  "Vagoni/parole completati: "+d.completati,"Lettere corrette: "+d.corrette,"Errori: "+d.errori,"Lettere perse: "+d.perse,
+  "Precisione: "+d.precisione+"%","Parole al minuto (WPM): "+d.wpm,"Lettere al minuto: "+d.lpm,"",
+  "Lettere sbagliate più spesso: "+lettersErr(d.errBy),""].join("\r\n");
+}
+
+// storico
+var KEY="treno-digitazione-storico";
+function loadHist(){try{return JSON.parse(localStorage.getItem(KEY)||"[]")}catch(e){return []}}
+function saveHist(d){
+  try{var h=loadHist();h.unshift({nome:d.nome,data:d.data,durata:d.durata,corrette:d.corrette,errori:d.errori,perse:d.perse,precisione:d.precisione,wpm:d.wpm});
+  localStorage.setItem(KEY,JSON.stringify(h.slice(0,30)));}catch(e){}
+  renderHist();
+}
+function renderHist(){
+  var h=loadHist();$("histCard").style.display=h.length?"block":"none";
+  var t="<tr><th>Data</th><th>Nome</th><th>Durata</th><th>Corrette</th><th>Errori</th><th>Perse</th><th>Prec.</th><th>WPM</th></tr>";
+  h.forEach(function(r){var c=document.createTextNode("");
+    var esc=function(s){return String(s).replace(/[&<>"]/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]})};
+    t+="<tr><td>"+esc(r.data)+"</td><td>"+esc(r.nome)+"</td><td>"+r.durata+" s</td><td>"+r.corrette+"</td><td>"+r.errori+"</td><td>"+r.perse+"</td><td>"+r.precisione+"%</td><td>"+r.wpm+"</td></tr>"});
+  $("hist").innerHTML=t;
+}
+
+async function saveAndDownload(){
+  var d=data();
+  if(!S.saved){saveHist(d);S.saved=true}
+  var name="report-digitazione-"+new Date().toISOString().slice(0,10)+".txt";
+  var dl=null;
+  try{dl=await claude.use("downloads")}catch(e){dl=null}
+  if(dl){
+    try{await dl.save({filename:name,data:report(d)});$("msg").textContent="Report salvato nello storico e scaricato.";return}
+    catch(e){
+      if(e&&e.code==="declined"){$("msg").textContent="Salvato nello storico. Download annullato.";return}
+    }
+  }
+  // alternativa: download classico (funziona se apri il file HTML in locale)
+  try{
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([report(d)],{type:"text/plain;charset=utf-8"}));
+    a.download=name;document.body.appendChild(a);a.click();a.remove();
+    $("msg").textContent="Report salvato nello storico e scaricato.";
+  }catch(e){$("msg").textContent="Salvato nello storico (download non disponibile qui)."}
+}
+
+// tastiera
+document.addEventListener("keydown",function(e){
+  var tag=(document.activeElement&&document.activeElement.tagName)||"";
+  var typing=(tag==="INPUT"&&document.activeElement.type!=="range")||tag==="SELECT"||tag==="TEXTAREA";
+  if(typing)return;
+  if(e.key==="Escape"){togglePause();return}
+  if(e.key==="ArrowUp"||e.key==="+"){e.preventDefault();setSpeed(S.speed+20);return}
+  if(e.key==="ArrowDown"||e.key==="-"){e.preventDefault();setSpeed(S.speed-20);return}
+  if(!S.running||S.paused||e.ctrlKey||e.metaKey||e.altKey)return;
+  if(e.key.length!==1||!/[a-zà-ú]/i.test(e.key))return;
+  e.preventDefault();
+  var t=target();if(!t)return;
+  var k=e.key.toLowerCase();
+  var ex=t.ch[t.pos];if(k===ex){S.ok++;S.okBy[k]=(S.okBy[k]||0)+1;t.pos++;if(t.pos>=t.ch.length){t.st="done";S.done++}}
+  else{S.err++;S.errBy[ex]=(S.errBy[ex]||0)+1;S.flash=0.25}
+  updateUI();
+});
+
+// disegno
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+function wheel(x,y){ctx.fillStyle="#222";ctx.beginPath();ctx.arc(x,y,8,0,7);ctx.fill();ctx.fillStyle="#999";ctx.beginPath();ctx.arc(x,y,3,0,7);ctx.fill()}
+function drawTxt(w,y){
+  ctx.textBaseline="middle";ctx.font="bold "+(w.ch.length>1?26:34)+"px system-ui,sans-serif";
+  var cy=y+WG/2-2;
+  if(w.st==="done"){ctx.fillStyle="#1c2433";ctx.textAlign="center";ctx.fillText("✓",w.x+w.w/2,cy);return}
+  var t=w.ch.length>1?w.ch:w.ch.toUpperCase();
+  ctx.textAlign="left";
+  var x0=w.x+(w.w-ctx.measureText(t).width)/2;
+  for(var i=0;i<t.length;i++){
+    ctx.fillStyle=i<w.pos?"#157a3a":"#1c2433";
+    ctx.fillText(t[i],x0,cy);x0+=ctx.measureText(t[i]).width;
+  }
+}
+function draw(){
+  var g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,"#8ec5ff");g.addColorStop(1,"#e6f4ff");
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle="#7fbf7a";ctx.fillRect(0,RAIL+6,W,H);
+  ctx.fillStyle="#6b5a4a";ctx.fillRect(0,RAIL+2,W,6);
+  ctx.fillStyle="#444";ctx.fillRect(0,RAIL,W,3);
+  var off=(S.t*S.speed*0.3)%40;
+  ctx.fillStyle="#5a4a3a";for(var x=-off;x<W;x+=40)ctx.fillRect(x,RAIL+3,8,6);
+  var tg=target();
+  S.wagons.forEach(function(w){
+    var y=RAIL-WG+6;
+    if(w.st==="loco"){
+      ctx.fillStyle="#c0392b";rr(w.x,y+10,WG,WG-16,8);ctx.fill();
+      ctx.fillStyle="#2c3e50";ctx.fillRect(w.x+8,y-6,16,20);
+      ctx.fillStyle="#fff";ctx.fillRect(w.x+36,y+18,18,16);
+      ctx.fillStyle="rgba(255,255,255,.8)";
+      for(var i=0;i<3;i++){var p=((S.t*1.2+i/3)%1);ctx.beginPath();ctx.arc(w.x+16+p*50,y-12-p*40,6+p*10,0,7);ctx.globalAlpha=1-p;ctx.fill();ctx.globalAlpha=1}
+      wheel(w.x+16,RAIL-6);wheel(w.x+WG-16,RAIL-6);return;
+    }
+    var col=w.st==="done"?"#2ecc71":w.st==="missed"?"#e74c3c":"#f5b942";
+    ctx.fillStyle=col;rr(w.x,y+4,w.w,WG-10,8);ctx.fill();
+    ctx.fillStyle="#6b5a4a";ctx.fillRect(w.x-10,RAIL-18,12,4);
+    if(w===tg){ctx.lineWidth=4;ctx.strokeStyle=S.flash>0?"#e74c3c":"#2f6fed";rr(w.x-2,y+2,w.w+4,WG-6,10);ctx.stroke()}
+    drawTxt(w,y);
+    
+    wheel(w.x+14,RAIL-6);wheel(w.x+w.w-14,RAIL-6);
+  });
+  if(S.flash>0){ctx.fillStyle="rgba(231,76,60,"+(S.flash*0.6)+")";ctx.fillRect(0,0,W,H)}
+  if(!S.running||S.paused){
+    ctx.fillStyle="rgba(0,0,0,.35)";ctx.fillRect(0,0,W,H);
+    ctx.fillStyle="#fff";ctx.font="bold 24px system-ui,sans-serif";ctx.textAlign="center";
+    ctx.fillText(S.paused?"In pausa":(S.elapsed>0?"Tempo scaduto!":"Premi “Inizia” per partire"),W/2,40);
+  }
+}
+function loop(now){
+  var dt=S.last?Math.min(0.05,(now-S.last)/1000):0;S.last=now;S.t+=dt;
+  if(S.flash>0)S.flash-=dt;
+  if(S.running&&!S.paused){
+    S.timeLeft-=dt;S.elapsed+=dt;
+    var dx=S.speed*dt;
+    S.wagons.forEach(function(w){w.x-=dx});
+    S.wagons.forEach(function(w){if(w.st==="active"&&w.x+w.w<24){w.st="missed";S.miss++}});
+    while(S.wagons.length&&S.wagons[0].x+S.wagons[0].w<-10)S.wagons.shift();
+    if(S.wagons.length)fill();
+    updateUI();
+    if(S.timeLeft<=0)finish();
+  }
+  draw();requestAnimationFrame(loop);
+}
+
+// eventi UI
+$("start").onclick=start;
+$("pause").onclick=togglePause;
+$("save").onclick=saveAndDownload;
+$("again").onclick=start;
+$("speed").oninput=function(){setSpeed(parseFloat(this.value))};
+$("faster").onclick=function(){setSpeed(S.speed+20);this.blur()};
+$("slower").onclick=function(){setSpeed(S.speed-20);this.blur()};
+$("dur").onchange=function(){if(!S.running){reset()}};
+$("theme").onchange=function(){
+  var v=this.value,r=document.documentElement;
+  if(v==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",v);
+};
+$("clearHist").onclick=function(){try{localStorage.removeItem(KEY)}catch(e){}renderHist()};
+
+$("set").onchange=function(){if(!S.running)reset()};
+$("dlApp").onclick=async function(){
+  var m=$("dlMsg"),html=null,dl=null;
+  try{var r=await fetch(location.href);if(r.ok)html=await r.text()}catch(e){}
+  if(!html||html.indexOf("<canvas")<0)html="<!DOCTYPE html>\n"+document.documentElement.outerHTML;
+  try{dl=await claude.use("downloads")}catch(e){}
+  try{
+    if(dl){await dl.save({filename:"treno-digitazione.html",data:html})}
+    else{var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([html],{type:"text/html"}));a.download="treno-digitazione.html";document.body.appendChild(a);a.click();a.remove()}
+    m.textContent="App scaricata: apri il file .html con il browser.";
+  }catch(e){m.textContent=(e&&e.code==="declined")?"Download annullato.":"Download non disponibile qui."}
+};
+setSpeed(120);reset();renderHist();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
